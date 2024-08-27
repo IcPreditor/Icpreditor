@@ -1,61 +1,68 @@
+#python3
+#Generates .json with all students
+#Uses requests to the eureca ufcg system, 
+#with the credentials in credentials.json, the token is saved in token.json
+#Guilherme Fernandes, 2024
+
 import requests as req
 import pandas as pd
 import json
 
-url = 'https://pre.ufcg.edu.br:8443/as_scao'
-url2 = 'https://eureca.sti.ufcg.edu.br/das'
 
-#token controller / requisita token
+url_token = 'https://pre.ufcg.edu.br:8443/as_scao'
+url_eureca = 'https://eureca.sti.ufcg.edu.br/das'
+
+#request token
 def genToken(data):
-    r = req.post((url+"/as/tokens"), json=data )
+    request = req.post((url_token+"/as/tokens"), json=data )
     #token = r.json()['token']
-    #salva token em token.json
-    with open("data/token.json","w") as file:
-        json.dump(r.json(),file)
+    #saves token in token.json
+    with open("data/token.json","w") as token_file:
+        json.dump(request.json(),token_file)
     #retorna token
-    return r.json()["token"]
+    return request.json()["token"]
 
-#profile-controller / requisita perfil refente ao token
+#request profile (using token)
 def getProfile(token):
     headers = {'content-type':'application/json',"authentication-token":token}
-    r = req.get((url+"/as/profile"),headers=headers)
-    return r.json()
+    request = req.get((url_token+"/as/profile"),headers=headers)
+    return request.json()
 
-#Courses Actives
+#request Courses Actives (using token)
 def saveCoursesActives(token):
     headers = {'content-type':'application/json',"authentication-token":token}
-    r = req.get(url2+"/courses/getActives",headers=headers)
+    request = req.get(url_eureca+"/courses/getActives",headers=headers)
     #save coursesActives
-    with open("data/coursesActives.json","w") as file:
-            json.dump(r.json(),file)
+    with open("data/coursesActives.json","w") as courses_file:
+            json.dump(request.json(),courses_file)
     #return r.content
 
-#Aluno by course // 2017.1-2023.2
+#student by course // 2017.1-2023.2
 def saveStudents(token):
     headers = {'content-type':'application/json',"authentication-token":token}
     students = []
-    for curso in json.load(open("data/coursesActives.json")):
-        r = req.get(url2+"/students?courseCode="+curso["code"]+"&from=2023.1&to=2023.2&anonymize=true",headers=headers)
-        students.extend(r.json()["students"])
-    with open("data/students.json","w") as file:
-        json.dump(students,file)
+    for course in json.load(open("data/coursesActives.json")):
+        request = req.get(url_eureca+"/students?courseCode="+course["code"]+"&from=2023.1&to=2023.2&anonymize=true",headers=headers)
+        students.extend(request.json()["students"])
+    with open("data/students.json","w") as students_file:
+        json.dump(students,students_file)
 
+#For test
 
-#Abre arquivo com credenciais
-cred = open("data/credentials.json","r")
+#Opens file with credentials (credentials.json)
+credentials = open("data/credentials.json","r")
 
-#Carrega .json
-data = json.load(cred)
+#loads .json
+data = json.load(credentials)
 
-#gera token 
+#request token 
 token = genToken(data)
 
-#fecha dados.json
-cred.close()
+#close file dados.json
+credentials.close()
 
 #get profile
 print(getProfile(token))
-print("#################")
 #get courses
 print(saveCoursesActives(token))
 #get students 2017
