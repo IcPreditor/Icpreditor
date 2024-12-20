@@ -12,6 +12,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn import metrics
 from scipy.stats import norm
 from sklearn.metrics import auc
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 
 # Função para calcular estatísticas da regressão logística
@@ -46,17 +47,24 @@ for col in ['motivo_de_evasao']:
     if col in X_test.columns:
         X_test = X_test.drop(columns=[col])
 
-# # Converter Y_train e Y_test para inteiros, caso necessário
-# Y_train = Y_train.astype(int)
-# Y_test = Y_test.astype(int)
+
 
 # Usar One-Hot Encoding para lidar com variáveis categóricas
-encoder = OneHotEncoder(drop='first', sparse_output=False, handle_unknown='ignore')  # Ignorar categorias desconhecidas
+encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')  # Ignorar categorias desconhecidas
 X_train_encoded = encoder.fit_transform(X_train)
 X_test_encoded = encoder.transform(X_test)
 
 # Obter os nomes das features após a codificação
 encoded_feature_names = encoder.get_feature_names_out()
+
+# Análise de Multicolinearidade: Calcular VIF
+vif_data = pd.DataFrame()
+vif_data["Variable"] = encoded_feature_names
+vif_data["VIF"] = [variance_inflation_factor(X_train_encoded, i) for i in range(X_train_encoded.shape[1])]
+
+print("\nAnálise de Multicolinearidade (VIF):")
+print(vif_data)
+
 
 # Treinar o modelo de Regressão Logística
 logreg = LogisticRegression(random_state=16, max_iter=100000)
