@@ -112,6 +112,8 @@ def cra_binary(cra): #Atualizado Igual
         return '011'
     elif cra <=10:
         return '100'
+    else:
+        return '000'
 #Classificação de faixa etária
 def age_to_binary(idade): #Atualizado Igual
     if idade <= 15:

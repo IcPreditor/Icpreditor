@@ -8,6 +8,7 @@ import processing
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import OneHotEncoder
 from sklearn import metrics
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
@@ -66,31 +67,24 @@ Y_train = Y_train.drop(columns=['motivo_de_evasao'])
 Y_test.reset_index(inplace=True,drop=True)
 Y_train.reset_index(inplace=True,drop=True)
 
+# Usar One-Hot Encoding para lidar com variáveis categóricas
+encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')  # Ignorar categorias desconhecidas
+X_train_encoded = encoder.fit_transform(X_train)
+X_test_encoded = encoder.transform(X_test)
+
+
 X_test_motivo = pd.DataFrame(data=X_test_motivo)
 X_test_motivo.reset_index(inplace=True,drop=True)
 X_test_motivo['resultado'] = 'NaN'
 print(X_test_motivo)
 
-
-
 # Treinar o modelo de Regressão Logística
 logreg = LogisticRegression(random_state=16, max_iter=100000)
-logreg.fit(X_train, Y_train)
+logreg.fit(X_train_encoded, Y_train)
 
-# Exibir os coeficientes de cada variável
-print("Coeficiente de Regressão das Variáveis:")
-coeficientes = logreg.coef_[0]
-coeficientes_dict = {feature_cols[i]: coef for i, coef in enumerate(coeficientes)}
-
-# Exibir variáveis ordenadas por impacto (coeficientes normalizados)
-coef_norm = {k: abs(v) for k, v in coeficientes_dict.items()}
-sorted_coef_norm = sorted(coef_norm.items(), key=lambda x: x[1], reverse=True)
-print("\nVariáveis mais impactantes (normalizadas):")
-for item, coef in sorted_coef_norm:
-    print(f"{item} - [{coef:.5f}]")
 
 # Fazer previsões no conjunto de teste
-Y_pred = logreg.predict(X_test)
+Y_pred = logreg.predict(X_test_encoded)
 
 
 # 0 / positivo / Não Evasão
